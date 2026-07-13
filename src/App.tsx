@@ -1,7 +1,14 @@
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from './components/ui/card';
 import { DeckForm } from './components/forms';
 import { create } from 'zustand';
+import { hypergeometricDistributionCalculation } from './lib/utils';
 
 interface DeckState {
   deckSize: number;
@@ -35,10 +42,8 @@ function App() {
   const handSize = useDeckStore((state) => state.handSize);
   const desiredCards = useDeckStore((state) => state.desiredCards);
 
-  const [output, setOutput] = useState(0);
-
   return (
-    <div className='py-16'>
+    <div className='py-16 '>
       <main className='w-full max-w-5xl m-auto'>
         <Card>
           <CardHeader>
@@ -47,60 +52,13 @@ function App() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <button
-              onClick={() => {
-                setOutput(
-                  hypergeometricDistributionCalculation(
-                    deckSize,
-                    handSize,
-                    desiredCards,
-                  ),
-                );
-              }}
-            >
-              Calculate
-            </button>
-            <p className='text-muted-foreground'>{output}%</p>
-
             <DeckForm />
           </CardContent>
+          <CardFooter></CardFooter>
         </Card>
       </main>
     </div>
   );
-}
-
-function factorial(n: number): number {
-  if (n > 1) {
-    return n * factorial(n - 1);
-  } else {
-    return 1;
-  }
-}
-
-function chooseCalculation(deckSize: number, handSize: number): number {
-  // N! / ( (H!) * (N-H)! )
-  // deck size = n
-  // hand size = h
-
-  const nFactorial = factorial(deckSize);
-  const hFactorial = factorial(handSize);
-  const nMinusHFactorial = factorial(deckSize - handSize);
-
-  return nFactorial / (hFactorial * nMinusHFactorial);
-}
-
-function hypergeometricDistributionCalculation(
-  deckSize: number,
-  handSize: number,
-  desiredCards: number,
-): number {
-  const nMinusKChooseH = chooseCalculation(deckSize - desiredCards, handSize);
-  const nChooseH = chooseCalculation(deckSize, handSize);
-
-  const result = 1 - nMinusKChooseH / nChooseH;
-  const formattedResult = Number((100 * result).toFixed(1));
-  return formattedResult;
 }
 
 export default App;
