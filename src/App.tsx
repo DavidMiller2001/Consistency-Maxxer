@@ -1,10 +1,39 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
+import { DeckForm } from './components/forms';
+import { create } from 'zustand';
+
+interface DeckState {
+  deckSize: number;
+  handSize: number;
+  desiredCards: number;
+  setDeckState: (
+    newDeckSize: number,
+    newHandSize: number,
+    newDesiredCards: number,
+  ) => void;
+}
+
+export const useDeckStore = create<DeckState>((set) => ({
+  deckSize: 40,
+  handSize: 5,
+  desiredCards: 3,
+  setDeckState: (
+    newDeckSize: number,
+    newHandSize: number,
+    newDesiredCards: number,
+  ) =>
+    set((state) => ({
+      deckSize: newDeckSize,
+      handSize: newHandSize,
+      desiredCards: newDesiredCards,
+    })),
+}));
 
 function App() {
-  const DECK_SIZE = 40;
-  const HAND_SIZE = 5;
-  const DESIRED_CARDS = 2;
+  const deckSize = useDeckStore((state) => state.deckSize);
+  const handSize = useDeckStore((state) => state.handSize);
+  const desiredCards = useDeckStore((state) => state.desiredCards);
 
   const [output, setOutput] = useState(0);
 
@@ -22,9 +51,9 @@ function App() {
               onClick={() => {
                 setOutput(
                   hypergeometricDistributionCalculation(
-                    DECK_SIZE,
-                    HAND_SIZE,
-                    DESIRED_CARDS,
+                    deckSize,
+                    handSize,
+                    desiredCards,
                   ),
                 );
               }}
@@ -32,6 +61,8 @@ function App() {
               Calculate
             </button>
             <p className='text-muted-foreground'>{output}%</p>
+
+            <DeckForm />
           </CardContent>
         </Card>
       </main>
@@ -67,7 +98,9 @@ function hypergeometricDistributionCalculation(
   const nMinusKChooseH = chooseCalculation(deckSize - desiredCards, handSize);
   const nChooseH = chooseCalculation(deckSize, handSize);
 
-  return Number((100 * (1 - nMinusKChooseH / nChooseH)).toFixed(1));
+  const result = 1 - nMinusKChooseH / nChooseH;
+  const formattedResult = Number((100 * result).toFixed(1));
+  return formattedResult;
 }
 
 export default App;
