@@ -10,6 +10,10 @@ export function chooseCalculation(deckSize: number, handSize: number): number {
   // deck size = n
   // hand size = h
 
+  if (handSize < 0 || handSize > deckSize) {
+    return 0;
+  }
+
   const nFactorial = factorial(deckSize);
   const hFactorial = factorial(handSize);
   const nMinusHFactorial = factorial(deckSize - handSize);
@@ -29,11 +33,23 @@ export function hypergeometricDistributionCalculation(
   deckSize: number,
   handSize: number,
   desiredCards: number,
+  desiredCopies: number,
 ): number {
-  const nMinusKChooseH = chooseCalculation(deckSize - desiredCards, handSize);
+  // deckSize = n
+  // desiredCards = k
+  // handSize = h
+  // desiredCopies = x
+
+  const kChooseX = chooseCalculation(desiredCards, desiredCopies);
+
+  const nMinusKChooseHMinusX = chooseCalculation(
+    deckSize - desiredCards,
+    handSize - desiredCopies,
+  );
+
   const nChooseH = chooseCalculation(deckSize, handSize);
 
-  const result = 1 - nMinusKChooseH / nChooseH;
+  const result = (kChooseX * nMinusKChooseHMinusX) / nChooseH;
   const formattedResult = Number((100 * result).toFixed(1));
   return formattedResult;
 }

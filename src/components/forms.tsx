@@ -1,137 +1,3 @@
-// import { Controller, useForm } from 'react-hook-form';
-// import { zodResolver } from '@hookform/resolvers/zod';
-// import * as z from 'zod';
-// import {
-//   Card,
-//   CardContent,
-//   CardDescription,
-//   CardFooter,
-//   CardHeader,
-//   CardTitle,
-// } from './ui/card';
-// import { Field, FieldError, FieldGroup, FieldLabel } from './ui/field';
-// import { Input } from './ui/input';
-// import { Button } from './ui/button';
-// import { useDeckStore } from '@/App';
-
-// export function DeckForm() {
-//   const formSchema = z.object({
-//     deckSize: z
-//       .number()
-//       .min(40, 'Decks must be between 40 and 60 cards')
-//       .max(60, 'Decks must be between 40 and 60 cards'),
-//     handSize: z.number(),
-//     desiredCards: z.number(),
-//   });
-
-//   const form = useForm<z.infer<typeof formSchema>>({
-//     resolver: zodResolver(formSchema),
-//     defaultValues: {
-//       deckSize: 40,
-//       handSize: 5,
-//       desiredCards: 3,
-//     },
-//   });
-
-//   function onSubmit(data: z.infer<typeof formSchema>) {
-//     const { deckSize, handSize, desiredCards } = data;
-
-//     const setDeckState = useDeckStore((state) =>
-//       state.setDeckState(deckSize, handSize, desiredCards),
-//     );
-//   }
-
-//   return (
-//     <Card className='w-full sm:max-w-md'>
-//       <CardHeader>
-//         <CardTitle>Bug Report</CardTitle>
-//         <CardDescription>
-//           Help us improve by reporting bugs you encounter.
-//         </CardDescription>
-//       </CardHeader>
-//       <CardContent>
-//         <form id='deckForm' onSubmit={form.handleSubmit(onSubmit)}>
-//           <FieldGroup>
-//             <Controller
-//               name='deckSize'
-//               control={form.control}
-//               render={({ field, fieldState }) => (
-//                 <Field data-invalid={fieldState.invalid}>
-//                   <FieldLabel htmlFor='deck-form-deck-size'>
-//                     Deck Size
-//                   </FieldLabel>
-//                   <Input
-//                     {...field}
-//                     id='deck-form-deck-size'
-//                     aria-invalid={fieldState.invalid}
-//                     placeholder='40'
-//                     autoComplete='off'
-//                   />
-//                   {fieldState.invalid && (
-//                     <FieldError errors={[fieldState.error]} />
-//                   )}
-//                 </Field>
-//               )}
-//             />
-//             <Controller
-//               name='handSize'
-//               control={form.control}
-//               render={({ field, fieldState }) => (
-//                 <Field data-invalid={fieldState.invalid}>
-//                   <FieldLabel htmlFor='deck-form-hand-size'>
-//                     Hand Size
-//                   </FieldLabel>
-//                   <Input
-//                     {...field}
-//                     id='deck-form-hand-size'
-//                     aria-invalid={fieldState.invalid}
-//                     placeholder='5'
-//                     autoComplete='off'
-//                   />
-//                   {fieldState.invalid && (
-//                     <FieldError errors={[fieldState.error]} />
-//                   )}
-//                 </Field>
-//               )}
-//             />
-//             <Controller
-//               name='desiredCards'
-//               control={form.control}
-//               render={({ field, fieldState }) => (
-//                 <Field data-invalid={fieldState.invalid}>
-//                   <FieldLabel htmlFor='deck-form-desired-cards'>
-//                     Desired Cards
-//                   </FieldLabel>
-//                   <Input
-//                     {...field}
-//                     id='deck-form-desired-cards'
-//                     aria-invalid={fieldState.invalid}
-//                     placeholder='3'
-//                     autoComplete='off'
-//                   />
-//                   {fieldState.invalid && (
-//                     <FieldError errors={[fieldState.error]} />
-//                   )}
-//                 </Field>
-//               )}
-//             />
-//           </FieldGroup>
-//         </form>
-//       </CardContent>
-//       <CardFooter>
-//         <Field orientation='horizontal'>
-//           <Button type='button' variant='outline' onClick={() => form.reset()}>
-//             Reset
-//           </Button>
-//           <Button type='submit' form='deckForm'>
-//             Submit
-//           </Button>
-//         </Field>
-//       </CardFooter>
-//     </Card>
-//   );
-// }
-
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -149,6 +15,7 @@ import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { useDeckStore } from '@/App';
 import { hypergeometricDistributionCalculation } from '@/lib/utils';
+import { useEffect, useState } from 'react';
 
 const formSchema = z.object({
   deckSize: z
@@ -182,6 +49,37 @@ export function DeckForm() {
   function onSubmit(data: DeckFormValues) {
     setDeckState(data.deckSize, data.handSize, data.desiredCards);
   }
+
+  const [oneCopyDrawn, setoneCopyDrawn] = useState(0);
+  const [twoCopiesDrawn, setTwoCopiesDrawn] = useState(0);
+  const [threeCopiesDrawn, setThreeCopiesDrawn] = useState(0);
+  const [zeroCopiesDrawn, setZeroCopiesDrawn] = useState(0);
+
+  useEffect(() => {
+    const zeroCopiesExactly = hypergeometricDistributionCalculation(
+      deckSize,
+      handSize,
+      desiredCards,
+      0,
+    );
+    const twoCopiesExactly = hypergeometricDistributionCalculation(
+      deckSize,
+      handSize,
+      desiredCards,
+      2,
+    );
+    const threeCopiesExactly = hypergeometricDistributionCalculation(
+      deckSize,
+      handSize,
+      desiredCards,
+      3,
+    );
+
+    setoneCopyDrawn(100 - zeroCopiesExactly);
+    setTwoCopiesDrawn(twoCopiesExactly + threeCopiesExactly);
+    setThreeCopiesDrawn(threeCopiesExactly);
+    setZeroCopiesDrawn(zeroCopiesExactly);
+  }, [desiredCards, deckSize, handSize]);
 
   return (
     <div className='flex justify-between px-8'>
@@ -316,19 +214,30 @@ export function DeckForm() {
           <CardTitle>Results</CardTitle>
         </CardHeader>
         <CardContent>
-          <ul>
+          <ul className='flex flex-col gap-2'>
             <li>
               <h3 className='text-muted-foreground'>
-                Chance to draw 1 or more of the desired card
+                Chance to draw 1 or more copies of the desired card
               </h3>
-              <p className='text-xl'>
-                {hypergeometricDistributionCalculation(
-                  deckSize,
-                  handSize,
-                  desiredCards,
-                )}
-                %
-              </p>
+              <p className='text-xl'>{oneCopyDrawn}%</p>
+            </li>
+            <li>
+              <h3 className='text-muted-foreground'>
+                Chance to draw 2 or more copies of the desired card
+              </h3>
+              <p className='text-xl'>{twoCopiesDrawn}%</p>
+            </li>
+            <li>
+              <h3 className='text-muted-foreground'>
+                Chance to draw 3 copies of the desired card
+              </h3>
+              <p className='text-xl'>{threeCopiesDrawn}%</p>
+            </li>
+            <li>
+              <h3 className='text-muted-foreground'>
+                Chance to draw 0 copies of the desired card
+              </h3>
+              <p className='text-xl'>{zeroCopiesDrawn}%</p>
             </li>
           </ul>
         </CardContent>

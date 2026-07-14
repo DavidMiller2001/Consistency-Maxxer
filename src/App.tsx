@@ -1,15 +1,13 @@
-import { useState } from 'react';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
 } from './components/ui/card';
 import { DeckForm } from './components/forms';
+
 import { create } from 'zustand';
-import { hypergeometricDistributionCalculation } from './lib/utils';
 
 interface DeckState {
   deckSize: number;
@@ -39,10 +37,6 @@ export const useDeckStore = create<DeckState>((set) => ({
 }));
 
 function App() {
-  const deckSize = useDeckStore((state) => state.deckSize);
-  const handSize = useDeckStore((state) => state.handSize);
-  const desiredCards = useDeckStore((state) => state.desiredCards);
-
   return (
     <div className='py-16 '>
       <main className='w-full max-w-5xl m-auto'>
@@ -61,6 +55,5 @@ function App() {
     </div>
   );
 }
-
 
 export default App;
