@@ -1,9 +1,24 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import z from 'zod';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+export const requiredNumber = (message: string) =>
+  z.union([z.number(), z.literal('')]).transform((value, context) => {
+    if (value === '') {
+      context.addIssue({
+        code: 'custom',
+        message,
+      });
+
+      return z.NEVER;
+    }
+
+    return value;
+  });
 
 function chooseCalculation(deckSize: number, handSize: number): number {
   // N! / ( (H!) * (N-H)! )

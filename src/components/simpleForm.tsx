@@ -14,22 +14,8 @@ import { Field, FieldError, FieldGroup, FieldLabel } from './ui/field';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { useDeckStore } from '@/App';
-import { hypergeometricDistribution } from '@/lib/utils';
+import { hypergeometricDistribution, requiredNumber } from '@/lib/utils';
 import { useEffect, useState } from 'react';
-
-const requiredNumber = (message: string) =>
-  z.union([z.number(), z.literal('')]).transform((value, context) => {
-    if (value === '') {
-      context.addIssue({
-        code: 'custom',
-        message,
-      });
-
-      return z.NEVER;
-    }
-
-    return value;
-  });
 
 const formSchema = z
   .object({
