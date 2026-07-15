@@ -17,21 +17,70 @@ import { useDeckStore } from '@/App';
 import { hypergeometricDistribution } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 
-const formSchema = z.object({
-  deckSize: z
-    .number()
-    .int()
-    .min(40, 'Decks must be between 40 and 60 cards')
-    .max(60, 'Decks must be between 40 and 60 cards'),
+const requiredNumber = (message: string) =>
+  z.union([z.number(), z.literal('')]).transform((value, context) => {
+    if (value === '') {
+      context.addIssue({
+        code: 'custom',
+        message,
+      });
 
-  handSize: z.number().int().min(1, 'Hand size must be at least 1'),
+      return z.NEVER;
+    }
 
-  desiredCards: z.number().int().min(1, 'Desired cards must be at least 1'),
+    return value;
+  });
 
-  desiredCopies: z.number().int(),
-});
+const formSchema = z
+  .object({
+    deckSize: requiredNumber('Deck size is required').pipe(
+      z
+        .number()
+        .int('Deck size must be a whole number')
+        .min(40, 'Decks must be between 40 and 60 cards')
+        .max(60, 'Decks must be between 40 and 60 cards'),
+    ),
 
-type DeckFormValues = z.infer<typeof formSchema>;
+    handSize: requiredNumber('Hand size is required').pipe(
+      z
+        .number()
+        .int('Hand size must be a whole number')
+        .min(1, 'Hand size must be at least 1'),
+    ),
+
+    desiredCards: requiredNumber('Desired cards is required').pipe(
+      z
+        .number()
+        .int('Desired cards must be a whole number')
+        .min(1, 'Desired cards must be at least 1'),
+    ),
+
+    desiredCopies: requiredNumber('Desired copies is required').pipe(
+      z
+        .number()
+        .int('Desired copies must be a whole number')
+        .min(0, 'Desired copies cannot be negative'),
+    ),
+  })
+  .refine((data) => data.handSize <= data.deckSize, {
+    path: ['handSize'],
+    message: 'Hand size cannot exceed deck size',
+  })
+  .refine((data) => data.desiredCards <= data.deckSize, {
+    path: ['desiredCards'],
+    message: 'Desired cards cannot exceed deck size',
+  })
+  .refine(
+    (data) => data.desiredCopies <= Math.min(data.desiredCards, data.handSize),
+    {
+      path: ['desiredCopies'],
+      message:
+        'Desired copies cannot exceed the desired card count or hand size',
+    },
+  );
+
+type DeckFormInput = z.input<typeof formSchema>;
+type DeckFormValues = z.output<typeof formSchema>;
 
 export function DeckForm() {
   const deckSize = useDeckStore((state) => state.deckSize);
@@ -40,7 +89,7 @@ export function DeckForm() {
   const desiredCopies = useDeckStore((state) => state.desiredCopies);
   const setDeckState = useDeckStore((state) => state.setDeckState);
 
-  const form = useForm<DeckFormValues>({
+  const form = useForm<DeckFormInput, unknown, DeckFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       deckSize: 40,
@@ -74,7 +123,7 @@ export function DeckForm() {
   }, [desiredCards, deckSize, handSize, desiredCopies]);
 
   return (
-    <div className='flex justify-between items-center gap-8 px-8 flex-col md:flex-row md:items-stretch'>
+    <div className='flex flex-col items-center justify-between gap-8 px-8 '>
       <Card className='w-full sm:max-w-md'>
         <CardHeader>
           <CardTitle>Deck Configuration</CardTitle>
@@ -102,9 +151,11 @@ export function DeckForm() {
                       ref={field.ref}
                       value={field.value}
                       onBlur={field.onBlur}
-                      onChange={(event) =>
-                        field.onChange(Number(event.target.value))
-                      }
+                      onChange={(event) => {
+                        const value = event.target.value;
+
+                        field.onChange(value === '' ? '' : Number(value));
+                      }}
                       type='number'
                       min={40}
                       max={60}
@@ -134,9 +185,11 @@ export function DeckForm() {
                       ref={field.ref}
                       value={field.value}
                       onBlur={field.onBlur}
-                      onChange={(event) =>
-                        field.onChange(Number(event.target.value))
-                      }
+                      onChange={(event) => {
+                        const value = event.target.value;
+
+                        field.onChange(value === '' ? '' : Number(value));
+                      }}
                       type='number'
                       min={1}
                       aria-invalid={fieldState.invalid}
@@ -165,9 +218,11 @@ export function DeckForm() {
                       ref={field.ref}
                       value={field.value}
                       onBlur={field.onBlur}
-                      onChange={(event) =>
-                        field.onChange(Number(event.target.value))
-                      }
+                      onChange={(event) => {
+                        const value = event.target.value;
+
+                        field.onChange(value === '' ? '' : Number(value));
+                      }}
                       type='number'
                       min={1}
                       aria-invalid={fieldState.invalid}
@@ -180,6 +235,7 @@ export function DeckForm() {
                   </Field>
                 )}
               />
+
               <Controller
                 name='desiredCopies'
                 control={form.control}
@@ -195,9 +251,11 @@ export function DeckForm() {
                       ref={field.ref}
                       value={field.value}
                       onBlur={field.onBlur}
-                      onChange={(event) =>
-                        field.onChange(Number(event.target.value))
-                      }
+                      onChange={(event) => {
+                        const value = event.target.value;
+
+                        field.onChange(value === '' ? '' : Number(value));
+                      }}
                       type='number'
                       min={0}
                       aria-invalid={fieldState.invalid}
@@ -235,12 +293,14 @@ export function DeckForm() {
         <CardHeader>
           <CardTitle>Results</CardTitle>
         </CardHeader>
+
         <CardContent>
           <div className='flex flex-col items-center'>
             <h3 className='text-muted-foreground w-full'>
-              {`Chance to draw ${desiredCopies} or more copies of the desired card`}
+              Chance to draw {desiredCopies} or more copies of the desired card
             </h3>
-            <p className='text-xl w-full'>{percentOdds.toFixed(2)}%</p>
+
+            <p className='w-full text-xl'>{percentOdds.toFixed(2)}%</p>
           </div>
         </CardContent>
       </Card>
