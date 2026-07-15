@@ -82,7 +82,7 @@ const formSchema = z
 type DeckFormInput = z.input<typeof formSchema>;
 type DeckFormValues = z.output<typeof formSchema>;
 
-export function DeckForm() {
+export function SimpleDeckForm() {
   const deckSize = useDeckStore((state) => state.deckSize);
   const handSize = useDeckStore((state) => state.handSize);
   const desiredCards = useDeckStore((state) => state.desiredCards);
@@ -134,7 +134,7 @@ export function DeckForm() {
         </CardHeader>
 
         <CardContent>
-          <form id='deckForm' onSubmit={form.handleSubmit(onSubmit)}>
+          <form id='simpleDeckForm' onSubmit={form.handleSubmit(onSubmit)}>
             <FieldGroup>
               <Controller
                 name='deckSize'
@@ -282,7 +282,7 @@ export function DeckForm() {
               Reset
             </Button>
 
-            <Button type='submit' form='deckForm'>
+            <Button type='submit' form='simpleDeckForm'>
               Calculate
             </Button>
           </Field>
