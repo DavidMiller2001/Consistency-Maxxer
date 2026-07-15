@@ -33,7 +33,7 @@ export const useDeckStore = create<DeckState>((set) => ({
     newDesiredCards: number,
     newDesiredCopies: number,
   ) =>
-    set((state) => ({
+    set(() => ({
       deckSize: newDeckSize,
       handSize: newHandSize,
       desiredCards: newDesiredCards,
@@ -45,7 +45,7 @@ function App() {
   return (
     <div className='py-16 '>
       <main className='w-full max-w-5xl m-auto'>
-        <Card>
+        <Card className='rounded-none'>
           <CardHeader>
             <CardTitle>
               <h1 className='text-foreground text-xl'>Consistency Maxxer</h1>
@@ -54,7 +54,11 @@ function App() {
           <CardContent>
             <DeckForm />
           </CardContent>
-          <CardFooter></CardFooter>
+          <CardFooter>
+            <p className='text-center text-muted-foreground w-full'>
+              &copy; David Miller 2026
+            </p>
+          </CardFooter>
         </Card>
       </main>
     </div>
