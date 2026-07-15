@@ -13,10 +13,12 @@ interface DeckState {
   deckSize: number;
   handSize: number;
   desiredCards: number;
+  desiredCopies: number;
   setDeckState: (
     newDeckSize: number,
     newHandSize: number,
     newDesiredCards: number,
+    newDesiredCopies: number,
   ) => void;
 }
 
@@ -24,15 +26,18 @@ export const useDeckStore = create<DeckState>((set) => ({
   deckSize: 40,
   handSize: 5,
   desiredCards: 3,
+  desiredCopies: 1,
   setDeckState: (
     newDeckSize: number,
     newHandSize: number,
     newDesiredCards: number,
+    newDesiredCopies: number,
   ) =>
     set((state) => ({
       deckSize: newDeckSize,
       handSize: newHandSize,
       desiredCards: newDesiredCards,
+      desiredCopies: newDesiredCopies,
     })),
 }));
 

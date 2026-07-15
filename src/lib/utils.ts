@@ -5,7 +5,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function chooseCalculation(deckSize: number, handSize: number): number {
+function chooseCalculation(deckSize: number, handSize: number): number {
   // N! / ( (H!) * (N-H)! )
   // deck size = n
   // hand size = h
@@ -21,7 +21,7 @@ export function chooseCalculation(deckSize: number, handSize: number): number {
   return nFactorial / (hFactorial * nMinusHFactorial);
 }
 
-export function factorial(n: number): number {
+function factorial(n: number): number {
   if (n > 1) {
     return n * factorial(n - 1);
   } else {
@@ -29,7 +29,7 @@ export function factorial(n: number): number {
   }
 }
 
-export function hypergeometricDistributionCalculation(
+function hypergeometricDistributionCalculation(
   deckSize: number,
   handSize: number,
   desiredCards: number,
@@ -49,7 +49,30 @@ export function hypergeometricDistributionCalculation(
 
   const nChooseH = chooseCalculation(deckSize, handSize);
 
-  const result = (kChooseX * nMinusKChooseHMinusX) / nChooseH;
-  const formattedResult = Number((100 * result).toFixed(1));
-  return formattedResult;
+  return (kChooseX * nMinusKChooseHMinusX) / nChooseH;
+}
+
+export function hypergeometricDistribution(
+  deckSize: number,
+  handSize: number,
+  desiredCards: number,
+  desiredCopies: number,
+) {
+  if (desiredCopies == 0 || desiredCopies > handSize) {
+    return 0;
+  }
+
+  const maxCopies = Math.min(handSize, desiredCards);
+  let result = 0;
+
+  for (let i = desiredCopies; i <= maxCopies; i++) {
+    result += hypergeometricDistributionCalculation(
+      deckSize,
+      handSize,
+      desiredCards,
+      i,
+    );
+  }
+
+  return result;
 }
