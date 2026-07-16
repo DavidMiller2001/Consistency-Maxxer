@@ -10,58 +10,18 @@ import {
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import z from 'zod';
-import { requiredNumber } from '@/lib/utils';
 import { Field, FieldError, FieldGroup, FieldLabel } from './ui/field';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 
-const formSchema = z
-  .object({
-    deckSize: requiredNumber('Deck size is required').pipe(
-      z
-        .number()
-        .int('Deck size must be a whole number')
-        .min(40, 'Decks must be between 40 and 60 cards')
-        .max(60, 'Decks must be between 40 and 60 cards'),
-    ),
-
-    handSize: requiredNumber('Hand size is required').pipe(
-      z
-        .number()
-        .int('Hand size must be a whole number')
-        .min(1, 'Hand size must be at least 1'),
-    ),
-
-    desiredCards: requiredNumber('Desired cards is required').pipe(
-      z
-        .number()
-        .int('Desired cards must be a whole number')
-        .min(1, 'Desired cards must be at least 1'),
-    ),
-
-    desiredCopies: requiredNumber('Desired copies is required').pipe(
-      z
-        .number()
-        .int('Desired copies must be a whole number')
-        .min(0, 'Desired copies cannot be negative'),
-    ),
-  })
-  .refine((data) => data.handSize <= data.deckSize, {
-    path: ['handSize'],
-    message: 'Hand size cannot exceed deck size',
-  })
-  .refine((data) => data.desiredCards <= data.deckSize, {
-    path: ['desiredCards'],
-    message: 'Desired cards cannot exceed deck size',
-  })
-  .refine(
-    (data) => data.desiredCopies <= Math.min(data.desiredCards, data.handSize),
-    {
-      path: ['desiredCopies'],
-      message:
-        'Desired copies cannot exceed the desired card count or hand size',
-    },
-  );
+const formSchema = z.object({
+  cardName: z.string().nonempty({ error: 'Must enter a card name!' }),
+  cardRole: z.string().nonempty({ error: 'Must enter card role!' }),
+  cardCopies: z
+    .number()
+    .min(1, { error: 'Must have at least 1 copy' })
+    .max(3, { error: 'No more than 3 copies' }),
+});
 
 type DeckFormInput = z.input<typeof formSchema>;
 type DeckFormValues = z.output<typeof formSchema>;
@@ -73,43 +33,108 @@ export function AdvancedDeckForm() {
     copiesInDeck: number;
   };
 
-  const [deck, setDeck] = useState<Card[]>([
-    {
-      name: 'White Albaz',
-      role: 'Starter',
-      copiesInDeck: 2,
-    },
-  ]);
+  const [deck, setDeck] = useState<Card[]>([]);
 
   const form = useForm<DeckFormInput, unknown, DeckFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      deckSize: 40,
-      handSize: 5,
-      desiredCards: 3,
-      desiredCopies: 1,
+      cardName: '',
+      cardRole: '',
+      cardCopies: 3,
     },
   });
 
-  function onSubmit(data: DeckFormValues) {}
+  function onSubmit(data: DeckFormValues) {
+    const { cardName, cardRole, cardCopies } = data;
+    form.reset();
+
+    const cardAlreadyExists = deck.some(
+      (card) =>
+        card.name.trim().toLowerCase() === cardName.trim().toLowerCase(),
+    );
+
+    if (cardAlreadyExists) {
+      alert('Card is already in the deck!');
+      return;
+    }
+
+    setDeck((prev) => {
+      return [
+        ...prev,
+        {
+          name: cardName,
+          role: cardRole,
+          copiesInDeck: cardCopies,
+        },
+      ];
+    });
+  }
 
   return (
     <div>
       <Card>
+        <CardHeader>
+          <CardTitle>Advanced Deck Configuration</CardTitle>
+          <CardDescription>
+            An advanced consistency calculator for drawing specific hands
+          </CardDescription>
+        </CardHeader>
         <CardContent>
           <form id='cardForm' onSubmit={form.handleSubmit(onSubmit)}>
             <FieldGroup>
               <Controller
-                name='deckSize'
+                name='cardName'
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor='deck-form-deck-size'>
-                      Deck Size
+                    <FieldLabel htmlFor='card-form-card-name'>
+                      Card Name
                     </FieldLabel>
 
                     <Input
-                      id='deck-form-deck-size'
+                      id='card-form-card-name'
+                      {...field}
+                      type='text'
+                      aria-invalid={fieldState.invalid}
+                      autoComplete='off'
+                      placeholder='Elemental Hero Stratos'
+                    />
+
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+              <Controller
+                name='cardRole'
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>Card Role</FieldLabel>
+                    <Input
+                      id='card-form-card-role'
+                      {...field}
+                      type='text'
+                      aria-invalid={fieldState.invalid}
+                      autoComplete='off'
+                      placeholder='Starter'
+                    />
+
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+              <Controller
+                name='cardCopies'
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>Card Copies</FieldLabel>
+                    <Input
+                      id='card-form-card-copies'
                       name={field.name}
                       ref={field.ref}
                       value={field.value}
@@ -120,8 +145,7 @@ export function AdvancedDeckForm() {
                         field.onChange(value === '' ? '' : Number(value));
                       }}
                       type='number'
-                      min={40}
-                      max={60}
+                      min={0}
                       aria-invalid={fieldState.invalid}
                       autoComplete='off'
                     />
@@ -135,40 +159,23 @@ export function AdvancedDeckForm() {
             </FieldGroup>
           </form>
         </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Advanced Deck Configuration</CardTitle>
-          <CardDescription>
-            An advanced consistency calculator for drawing specific hands
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ul>
-            {deck.map((card) => (
-              <li key={card.name} className='flex gap-2'>
-                <h4>{card.name}</h4>
-                <p>{card.copiesInDeck}x</p>
-              </li>
-            ))}
-          </ul>
-        </CardContent>
         <CardFooter>
           <Field orientation='horizontal'>
-            <Button
-              type='button'
-              variant='outline'
-              onClick={() => form.reset()}
-            >
-              Reset
-            </Button>
-
-            <Button type='submit' form='simpleDeckForm'>
-              Calculate
+            <Button type='submit' form='cardForm'>
+              Add Card
             </Button>
           </Field>
         </CardFooter>
       </Card>
+
+      <ul>
+        {deck.map((card) => (
+          <li key={card.name} className='flex gap-2'>
+            <h4>{card.name}</h4>
+            <p>{card.copiesInDeck}x</p>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
