@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -13,6 +12,15 @@ import z from 'zod';
 import { Field, FieldError, FieldGroup, FieldLabel } from './ui/field';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from './ui/table';
+import { create } from 'zustand';
 
 const formSchema = z.object({
   cardName: z.string().nonempty({ error: 'Must enter a card name!' }),
@@ -26,14 +34,59 @@ const formSchema = z.object({
 type DeckFormInput = z.input<typeof formSchema>;
 type DeckFormValues = z.output<typeof formSchema>;
 
-export function AdvancedDeckForm() {
-  type Card = {
-    name: string;
-    role: string;
-    copiesInDeck: number;
-  };
+type Card = {
+  name: string;
+  role: string;
+  copiesInDeck: number;
+};
 
-  const [deck, setDeck] = useState<Card[]>([]);
+interface AdvancedDeckState {
+  deck: Card[];
+  setAdvancedDeckState: (newDeck: Card[]) => void;
+  increaseCopies: (cardName: string) => void;
+  decreaseCopies: (cardName: string) => void;
+}
+
+export const useAdvancedDeckStore = create<AdvancedDeckState>((set) => ({
+  deck: [],
+  setAdvancedDeckState: (newDeck) =>
+    set(() => ({
+      deck: newDeck,
+    })),
+
+  increaseCopies: (cardName) => {
+    set((state) => ({
+      deck: state.deck.map((card) => {
+        if (card.name === cardName && card.copiesInDeck < 3) {
+          return {
+            ...card,
+            copiesInDeck: card.copiesInDeck + 1,
+          };
+        }
+        return card;
+      }),
+    }));
+  },
+  decreaseCopies: (cardName) => {
+    set((state) => ({
+      deck: state.deck.map((card) => {
+        if (card.name === cardName && card.copiesInDeck > 1) {
+          return {
+            ...card,
+            copiesInDeck: card.copiesInDeck - 1,
+          };
+        }
+        return card;
+      }),
+    }));
+  },
+}));
+
+export function AdvancedDeckForm() {
+  const deck = useAdvancedDeckStore((state) => state.deck);
+  const setAdvancedDeckState = useAdvancedDeckStore(
+    (state) => state.setAdvancedDeckState,
+  );
 
   const form = useForm<DeckFormInput, unknown, DeckFormValues>({
     resolver: zodResolver(formSchema),
@@ -58,16 +111,14 @@ export function AdvancedDeckForm() {
       return;
     }
 
-    setDeck((prev) => {
-      return [
-        ...prev,
-        {
-          name: cardName,
-          role: cardRole,
-          copiesInDeck: cardCopies,
-        },
-      ];
-    });
+    setAdvancedDeckState([
+      ...deck,
+      {
+        name: cardName,
+        role: cardRole,
+        copiesInDeck: cardCopies,
+      },
+    ]);
   }
 
   return (
@@ -168,14 +219,47 @@ export function AdvancedDeckForm() {
         </CardFooter>
       </Card>
 
-      <ul>
-        {deck.map((card) => (
-          <li key={card.name} className='flex gap-2'>
-            <h4>{card.name}</h4>
-            <p>{card.copiesInDeck}x</p>
-          </li>
-        ))}
-      </ul>
+      <DeckTable />
     </div>
+  );
+}
+
+function DeckTable() {
+  const deck = useAdvancedDeckStore((state) => state.deck);
+  const increaseCopies = useAdvancedDeckStore((state) => state.increaseCopies);
+  const decreaseCopies = useAdvancedDeckStore((state) => state.decreaseCopies);
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Name</TableHead>
+          <TableHead>Role</TableHead>
+          <TableHead>Copies</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {deck.map((card) => (
+          <TableRow key={card.name}>
+            <TableCell>{card.name}</TableCell>
+            <TableCell>{card.role}</TableCell>
+            <TableCell>
+              <Button
+                variant={'ghost'}
+                onClick={() => decreaseCopies(card.name)}
+              >
+                -
+              </Button>
+              {card.copiesInDeck}
+              <Button
+                variant={'ghost'}
+                onClick={() => increaseCopies(card.name)}
+              >
+                +
+              </Button>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 }
