@@ -6,44 +6,10 @@ import {
   CardTitle,
 } from './components/ui/card';
 import { SimpleDeckForm } from './components/simpleForm';
-
-import { create } from 'zustand';
 import { Button } from './components/ui/button';
 import { useState } from 'react';
 import { cn } from './lib/utils';
 import { AdvancedDeckForm } from './components/advancedForm';
-
-interface DeckState {
-  deckSize: number;
-  handSize: number;
-  desiredCards: number;
-  desiredCopies: number;
-  setDeckState: (
-    newDeckSize: number,
-    newHandSize: number,
-    newDesiredCards: number,
-    newDesiredCopies: number,
-  ) => void;
-}
-
-export const useDeckStore = create<DeckState>((set) => ({
-  deckSize: 40,
-  handSize: 5,
-  desiredCards: 3,
-  desiredCopies: 1,
-  setDeckState: (
-    newDeckSize: number,
-    newHandSize: number,
-    newDesiredCards: number,
-    newDesiredCopies: number,
-  ) =>
-    set(() => ({
-      deckSize: newDeckSize,
-      handSize: newHandSize,
-      desiredCards: newDesiredCards,
-      desiredCopies: newDesiredCopies,
-    })),
-}));
 
 function App() {
   const pageComplexityOptions = ['simple', 'advanced'] as const;

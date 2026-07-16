@@ -13,9 +13,40 @@ import {
 import { Field, FieldError, FieldGroup, FieldLabel } from './ui/field';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-import { useDeckStore } from '@/App';
 import { hypergeometricDistribution, requiredNumber } from '@/lib/utils';
 import { useEffect, useState } from 'react';
+import { create } from 'zustand';
+
+interface DeckState {
+  deckSize: number;
+  handSize: number;
+  desiredCards: number;
+  desiredCopies: number;
+  setDeckState: (
+    newDeckSize: number,
+    newHandSize: number,
+    newDesiredCards: number,
+    newDesiredCopies: number,
+  ) => void;
+}
+const useDeckStore = create<DeckState>((set) => ({
+  deckSize: 40,
+  handSize: 5,
+  desiredCards: 3,
+  desiredCopies: 1,
+  setDeckState: (
+    newDeckSize: number,
+    newHandSize: number,
+    newDesiredCards: number,
+    newDesiredCopies: number,
+  ) =>
+    set(() => ({
+      deckSize: newDeckSize,
+      handSize: newHandSize,
+      desiredCards: newDesiredCards,
+      desiredCopies: newDesiredCopies,
+    })),
+}));
 
 const formSchema = z
   .object({
