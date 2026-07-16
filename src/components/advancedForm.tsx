@@ -21,6 +21,7 @@ import {
   TableRow,
 } from './ui/table';
 import { create } from 'zustand';
+import { X } from 'lucide-react';
 
 const formSchema = z.object({
   cardName: z.string().nonempty({ error: 'Must enter a card name!' }),
@@ -45,10 +46,17 @@ interface AdvancedDeckState {
   setAdvancedDeckState: (newDeck: Card[]) => void;
   increaseCopies: (cardName: string) => void;
   decreaseCopies: (cardName: string) => void;
+  removeCard: (cardName: string) => void;
 }
 
 export const useAdvancedDeckStore = create<AdvancedDeckState>((set) => ({
-  deck: [],
+  deck: [
+    {
+      name: 'Elemental Hero Stratos',
+      role: 'Normal Summon',
+      copiesInDeck: 3,
+    },
+  ],
   setAdvancedDeckState: (newDeck) =>
     set(() => ({
       deck: newDeck,
@@ -78,6 +86,11 @@ export const useAdvancedDeckStore = create<AdvancedDeckState>((set) => ({
         }
         return card;
       }),
+    }));
+  },
+  removeCard: (cardName) => {
+    set((state) => ({
+      deck: state.deck.filter((card) => card.name !== cardName),
     }));
   },
 }));
@@ -228,6 +241,7 @@ function DeckTable() {
   const deck = useAdvancedDeckStore((state) => state.deck);
   const increaseCopies = useAdvancedDeckStore((state) => state.increaseCopies);
   const decreaseCopies = useAdvancedDeckStore((state) => state.decreaseCopies);
+  const removeCard = useAdvancedDeckStore((state) => state.removeCard);
   return (
     <Table>
       <TableHeader>
@@ -255,6 +269,11 @@ function DeckTable() {
                 onClick={() => increaseCopies(card.name)}
               >
                 +
+              </Button>
+            </TableCell>
+            <TableCell>
+              <Button variant={'ghost'} onClick={() => removeCard(card.name)}>
+                <X />
               </Button>
             </TableCell>
           </TableRow>
